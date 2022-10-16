@@ -1,8 +1,12 @@
 from collections import defaultdict
-
+import numpy as np
+from scipy.sparse.csgraph import minimum_spanning_tree
+from junction import JunctionTree
 
 def compute_elimination_order(bnet):
     """Computes a low-width elimination order for a Bayesian network.
+
+    YOU DO NOT NEED TO UNDERSTAND HOW THIS FUNCTION WORKS.
 
     Parameters
     ----------
@@ -41,6 +45,53 @@ def compute_elimination_order(bnet):
         return elim_order
     moral_graph = build_moral_graph(bnet)
     return min_degree_elim_order(moral_graph), moral_graph
+
+
+def build_junction_tree(bnet):
+    """Constructs a junction tree from a Bayesian network.
+
+    YOU DO NOT NEED TO UNDERSTAND HOW THIS FUNCTION WORKS.
+
+    Parameters
+    ----------
+    bnet : BayesianNetwork
+        the Bayesian network
+
+    Returns
+    -------
+    JunctionTree
+        a reasonably efficient junction tree for the provided Bayesian network
+    """
+
+    def elimination_cliques():
+        result = []
+        adjacencies = moral_graph.get_adjacencies()
+        for node in elim_order:
+            result.append(adjacencies[node] | {node})
+            neighbors = adjacencies[node]
+            new_adjacencies = dict()
+            for n in adjacencies:
+                if n in neighbors:
+                    new_adjacencies[n] = (adjacencies[n] - {node}) | (neighbors - {n})
+                elif n != node:
+                    new_adjacencies[n] = adjacencies[n]
+            adjacencies = new_adjacencies
+        return result
+
+    elim_order, moral_graph = compute_elimination_order(bnet)
+    cliques = elimination_cliques()
+    adjacency_matrix = np.zeros((len(cliques), len(cliques)), int)
+    for i in range(len(cliques)):
+        for j in range(i + 1, len(cliques)):
+            adjacency_matrix[i][j] = -len(cliques[i] & cliques[j])
+    mst = minimum_spanning_tree(adjacency_matrix)
+    edges = zip(mst.nonzero()[0], mst.nonzero()[1])
+    graph = UndirectedGraph(num_nodes=len(elim_order), node_labels=list(range(len(elim_order))), edges=edges)
+    builder = JunctionTreeBuilder(graph, cliques)
+    for factor in bnet.get_factors():
+        builder.add_factor(factor)
+    junction_tree = builder.get_junction_tree()
+    return prune_unlabeled_leaves(junction_tree)
 
 
 class UndirectedGraph:
@@ -106,6 +157,58 @@ class UndirectedGraph:
 
     def __str__(self):
         return str(self.get_edges())
+
+
+def prune_unlabeled_leaves(jtree):
+    def first_unlabeled_leaf():
+        for node in range(result._graph.get_num_nodes()):
+            if result._graph.is_leaf(node) and len(result._factors[node]) == 0:
+                return node
+        else:
+            return None
+    result = jtree
+    prunable_leaf = first_unlabeled_leaf()
+    while prunable_leaf is not None:
+        new_graph = result._graph.prune_leaf(prunable_leaf)
+        new_factors = result._factors[:prunable_leaf] + result._factors[prunable_leaf+1:]
+        result = JunctionTree(new_graph, new_factors)
+        prunable_leaf = first_unlabeled_leaf()
+    return result
+
+
+
+class JunctionTreeBuilder:
+
+    def __init__(self, graph, clusters):
+        self.graph = graph
+        self.clusters = clusters
+        self.node_map = defaultdict(set)
+        for node, cluster in enumerate(self.clusters):
+            for variable in cluster:
+                self.node_map[variable].add(node)
+        self.node_map = dict(self.node_map)
+        self.factors = defaultdict(list)
+
+    def add_factor(self, factor):
+        nodesets = [self.node_map[var] for var in factor.get_variables()]
+        possible_assignments = nodesets[0]
+        for nodeset in nodesets[1:]:
+            possible_assignments = possible_assignments & nodeset
+        assignment = list(possible_assignments)[0]
+        if not self.graph.is_leaf(assignment):
+            assignment, self.graph = self.graph.sprout_leaf(assignment)
+        elif len(self.factors[assignment]) > 0:
+            assignment1, self.graph = self.graph.sprout_leaf(assignment)
+            self.factors[assignment1] = self.factors[assignment]
+            self.factors[assignment] = []
+            assignment, self.graph = self.graph.sprout_leaf(assignment)
+        self.factors[assignment].append(factor)
+
+    def get_junction_tree(self):
+        factor_list = [[] for _ in range(self.graph.get_num_nodes())]
+        for i, factor in self.factors.items():
+            factor_list[i] = factor
+        return JunctionTree(self.graph, factor_list)
 
 
 
