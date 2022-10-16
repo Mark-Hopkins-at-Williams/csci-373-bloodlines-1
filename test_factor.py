@@ -65,7 +65,7 @@ def example_factors():
     return domains, p_factor, l_factor
 
 
-class TestTwoNormalize(unittest.TestCase):
+class TestTwoNormalizeAndReduce(unittest.TestCase):
 
     def test_normalize1(self):
         _, _, l_factor = example_factors()
@@ -104,9 +104,6 @@ class TestTwoNormalize(unittest.TestCase):
         self.assertEqual(factor.get_value({'X_M': 'O', 'X_P': 'O', 'Z_M': 'A'}), 0.0)
         self.assertEqual(factor.get_value({'X_M': 'O', 'X_P': 'O', 'Z_M': 'B'}), 0.0)
         self.assertEqual(factor.get_value({'X_M': 'O', 'X_P': 'O', 'Z_M': 'O'}), 1/9)
-
-
-class TestTwoReduce(unittest.TestCase):
 
     def test_reduce(self):
         _, _, l_factor = example_factors()
