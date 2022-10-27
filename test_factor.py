@@ -105,7 +105,7 @@ class TestTwoNormalizeAndReduce(unittest.TestCase):
         self.assertEqual(factor.get_value({'X_M': 'O', 'X_P': 'O', 'Z_M': 'B'}), 0.0)
         self.assertEqual(factor.get_value({'X_M': 'O', 'X_P': 'O', 'Z_M': 'O'}), 1/9)
 
-    def test_reduce(self):
+    def test_reduce1(self):
         _, _, l_factor = example_factors()
         l_factor = l_factor.reduce({'P': 'yes'})
         self.assertEqual(l_factor.get_value({'P': 'yes', 'L': 'u'}), .1)
@@ -114,6 +114,16 @@ class TestTwoNormalizeAndReduce(unittest.TestCase):
             l_factor.get_value({'P': 'no', 'L': 'u'})
         with self.assertRaises(KeyError):
             l_factor.get_value({'P': 'no', 'L': 'd'})
+
+    def test_reduce2(self):
+        factor = create_inheritance_cpt('X', 'Z', 'M').reduce({'X_M': 'B', 'X_P': 'O'})
+        self.assertEqual(factor.get_value({'X_M': 'B', 'X_P': 'O', 'Z_M': 'A'}), 0.0)
+        self.assertEqual(factor.get_value({'X_M': 'B', 'X_P': 'O', 'Z_M': 'B'}), 0.5)
+        self.assertEqual(factor.get_value({'X_M': 'B', 'X_P': 'O', 'Z_M': 'O'}), 0.5)
+        with self.assertRaises(KeyError):
+            factor.get_value({'X_M': 'B', 'X_P': 'A', 'Z_M': 'O'})
+        with self.assertRaises(KeyError):
+            factor.get_value({'X_M': 'A', 'X_P': 'O', 'Z_M': 'O'})
 
 
 class TestTwoMarginalize(unittest.TestCase):
