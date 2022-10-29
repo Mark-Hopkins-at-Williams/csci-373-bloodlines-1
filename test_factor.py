@@ -187,6 +187,32 @@ class TestThree(unittest.TestCase):
         self.assertAlmostEqual(product.get_value({'F': '3', 'G': '3', 'C': '2'}), 0.0)
         self.assertAlmostEqual(product.get_value({'F': '3', 'G': '3', 'C': '3'}), 0.0)
 
+    def test_multiply3(self):
+        domains = {'C': ['1', '2', '3'],
+                   'G': ['2', '3'],
+                   'F': ['1', '2', '3'],
+                   'W': ['yes', 'no']}
+        factor1 = create_goat_cpt().reduce({'G': '3'})
+        factor2 = create_finalchoice_cpt()
+        product = multiply_factors([factor1, factor2], domains)
+        self.assertAlmostEqual(product.get_value({'F': '1', 'G': '2', 'C': '1'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '1', 'G': '2', 'C': '2'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '1', 'G': '2', 'C': '3'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '1', 'G': '3', 'C': '1'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '1', 'G': '3', 'C': '2'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '1', 'G': '3', 'C': '3'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '2', 'G': '2', 'C': '1'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '2', 'G': '2', 'C': '2'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '2', 'G': '2', 'C': '3'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '2', 'G': '3', 'C': '1'}), 0.5)
+        self.assertAlmostEqual(product.get_value({'F': '2', 'G': '3', 'C': '2'}), 1.0)
+        self.assertAlmostEqual(product.get_value({'F': '2', 'G': '3', 'C': '3'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '3', 'G': '2', 'C': '1'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '3', 'G': '2', 'C': '2'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '3', 'G': '2', 'C': '3'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '3', 'G': '3', 'C': '1'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '3', 'G': '3', 'C': '2'}), 0.0)
+        self.assertAlmostEqual(product.get_value({'F': '3', 'G': '3', 'C': '3'}), 0.0)
 
 class TestFactor(unittest.TestCase):
 
