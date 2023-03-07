@@ -220,6 +220,7 @@ class TestFactor(unittest.TestCase):
         _, p_factor, l_factor = example_factors()
         self.assertEqual(p_factor.get_variables(), ['P'])
         self.assertEqual(set(l_factor.get_variables()), set(['P', 'L']))
+        self.assertEqual(len(l_factor.get_variables()), 2)
 
     def test_get_value(self):
         _, _, l_factor = example_factors()
